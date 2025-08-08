@@ -1,19 +1,29 @@
 import { Router } from 'express';
 import { db } from '../index.js';
 import { generateQuote } from '../services/geminiService.js';
-import { Quote, DraftQuote, Customer, Vehicle, ShopSettings } from '../../../client/src/types.js';
+import { Quote, DraftQuote, Customer, Vehicle, ShopSettings } from '../types.js';
 
 const router = Router();
 
+// Helper to parse JSON fields from DB
+const parseQuote = (row: any) => {
+    if (!row) return null;
+    return {
+        ...row,
+        services: JSON.parse(row.services || '[]'),
+        payments: JSON.parse(row.payments || '[]'),
+    };
+};
+
 // GET all quotes
 router.get('/', async (req, res) => {
-    const quotes = await db('quotes').select('*').then(rows => rows.map(r => ({ ...r, services: JSON.parse(r.services), payments: JSON.parse(r.payments) })));
+    const quotes = await db('quotes').select('*').then(rows => rows.map(parseQuote));
     res.json(quotes);
 });
 
 // GET a single quote
 router.get('/:id', async (req, res) => {
-    const quote = await db('quotes').where({ id: req.params.id }).first().then(r => r ? ({ ...r, services: JSON.parse(r.services), payments: JSON.parse(r.payments) }) : null);
+    const quote = await db('quotes').where({ id: req.params.id }).first().then(parseQuote);
     if (quote) {
         res.json(quote);
     } else {
@@ -49,6 +59,8 @@ router.post('/', async (req, res) => {
         id: `QT-${Date.now()}`,
         status: 'Saved',
         payments: [],
+        services: draftQuote.services || [],
+        notes: draftQuote.notes || '',
     };
     await db('quotes').insert({ ...newQuote, services: JSON.stringify(newQuote.services), payments: JSON.stringify(newQuote.payments) });
     res.status(201).json(newQuote);
@@ -58,14 +70,14 @@ router.post('/', async (req, res) => {
 // PUT to update a quote
 router.put('/:id', async (req, res) => {
     const updatedQuote: Quote = req.body;
-    await db('quotes').where({ id: req.params.id }).update({ ...updatedQuote, services: JSON.stringify(updatedQuote.services), payments: JSON.stringify(updatedQuote.payments) });
+    await db('quotes').where({ id: req.params.id }).update({ ...updatedQuote, services: JSON.stringify(updatedQuote.services), payments: JSON.stringify(updatedQuote.payments || []) });
     res.json(updatedQuote);
 });
 
 // PUT to update quote status
 router.put('/:id/status', async (req, res) => {
     const { status, mileage } = req.body;
-    const quote = await db('quotes').where({ id: req.params.id }).first().then(r => ({ ...r, services: JSON.parse(r.services), payments: JSON.parse(r.payments) })) as Quote;
+    const quote = await db('quotes').where({ id: req.params.id }).first().then(parseQuote) as Quote;
     
     if (!quote) return res.status(404).json({ message: 'Quote not found' });
 
@@ -90,8 +102,44 @@ router.put('/:id/status', async (req, res) => {
     res.json(quote);
 });
 
-// Other specific quote updates...
-// ... (e.g., notes, payments, discount, assign technician)
+// PUT to update notes
+router.put('/:id/notes', async (req, res) => {
+    const { notes } = req.body;
+    await db('quotes').where({ id: req.params.id }).update({ notes });
+    const updatedQuote = await db('quotes').where({ id: req.params.id }).first().then(parseQuote);
+    res.json(updatedQuote);
+});
+
+// POST to add a payment
+router.post('/:id/payments', async (req, res) => {
+    const paymentData = req.body;
+    const quote = await db('quotes').where({ id: req.params.id }).first().then(parseQuote) as Quote;
+
+    if (!quote) return res.status(404).json({ message: 'Quote not found' });
+
+    const newPayment = { ...paymentData, id: `PAY-${Date.now()}` };
+    quote.payments = [...(quote.payments || []), newPayment];
+    
+    const totalPaid = quote.payments.reduce((sum, p) => sum + p.amount, 0);
+    const totalCost = quote.totalCost - (quote.discountAmount || 0);
+
+    if (totalPaid >= totalCost) {
+        quote.status = 'Paid';
+    }
+
+    await db('quotes').where({ id: req.params.id }).update({ ...quote, services: JSON.stringify(quote.services), payments: JSON.stringify(quote.payments) });
+    res.json(quote);
+});
+
+
+// PUT to assign a technician
+router.put('/:id/assign', async (req, res) => {
+    const { technicianId } = req.body;
+    const techIdToSet = technicianId === 'unassigned' ? null : technicianId;
+    await db('quotes').where({ id: req.params.id }).update({ technicianId: techIdToSet });
+    const updatedQuote = await db('quotes').where({ id: req.params.id }).first().then(parseQuote);
+    res.json(updatedQuote);
+});
 
 // DELETE a quote
 router.delete('/:id', async (req, res) => {

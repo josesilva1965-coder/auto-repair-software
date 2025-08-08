@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import type { Quote, Language, VinInfo, ShopSettings, ModelListResponse } from '../../../../client/src/types.js';
+import type { Quote, Language, VinInfo, ShopSettings, ModelListResponse } from '../types.js';
 
 if (!process.env.GEMINI_API_KEY) {
     throw new Error("GEMINI_API_KEY environment variable is not set.");

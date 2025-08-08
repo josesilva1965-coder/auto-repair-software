@@ -10,7 +10,10 @@ import {
  * @returns { Promise<void> } 
  */
 export const seed = async (knex) => {
-  // Deletes ALL existing entries
+  // Deletes ALL existing entries in reverse order of creation due to foreign keys
+  await knex('vehicleMaintenance').del();
+  await knex('maintenanceSchedules').del();
+  await knex('communicationLogs').del();
   await knex('appointments').del();
   await knex('quotes').del();
   await knex('inventoryParts').del();
@@ -18,14 +21,13 @@ export const seed = async (knex) => {
   await knex('vehicles').del();
   await knex('customers').del();
   await knex('shopSettings').del();
-  // ... add other dels here
 
   // Helper to stringify JSON fields
   const stringifyJson = (data, fields) => {
     return data.map(item => {
       const newItem = { ...item };
       fields.forEach(field => {
-        if (newItem[field]) {
+        if (newItem[field] && typeof newItem[field] !== 'string') {
           newItem[field] = JSON.stringify(newItem[field]);
         }
       });
@@ -39,6 +41,9 @@ export const seed = async (knex) => {
   await knex('technicians').insert(stringifyJson(mockTechnicians, ['availability']));
   await knex('quotes').insert(stringifyJson(mockQuotes, ['services', 'payments']));
   await knex('appointments').insert(mockAppointments);
+  await knex('communicationLogs').insert(stringifyJson(mockCommunicationLogs, ['customerIds']));
+  await knex('maintenanceSchedules').insert(mockMaintenanceSchedules);
+  await knex('vehicleMaintenance').insert(mockVehicleMaintenance);
 
   const settingsWithJson = {
     ...mockShopSettings,

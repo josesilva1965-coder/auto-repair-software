@@ -84,7 +84,28 @@ export const up = async (knex) => {
     table.string('vehicleApiUrl');
   });
 
-  // ... Add other tables like communicationLogs, maintenanceSchedules, etc.
+  await knex.schema.createTable('communicationLogs', (table) => {
+    table.string('id').primary();
+    table.json('customerIds').notNullable();
+    table.string('subject').notNullable();
+    table.text('message').notNullable();
+    table.string('date').notNullable();
+  });
+
+  await knex.schema.createTable('maintenanceSchedules', (table) => {
+    table.string('id').primary();
+    table.string('name').notNullable();
+    table.integer('intervalMiles');
+    table.integer('intervalMonths');
+  });
+
+  await knex.schema.createTable('vehicleMaintenance', (table) => {
+    table.string('id').primary();
+    table.string('vehicleId').references('id').inTable('vehicles').onDelete('CASCADE');
+    table.string('scheduleId').references('id').inTable('maintenanceSchedules').onDelete('CASCADE');
+    table.string('lastPerformedDate').notNullable();
+    table.integer('lastPerformedMileage').notNullable();
+  });
 };
 
 /**
@@ -92,6 +113,9 @@ export const up = async (knex) => {
  * @returns { Promise<void> }
  */
 export const down = async (knex) => {
+  await knex.schema.dropTableIfExists('vehicleMaintenance');
+  await knex.schema.dropTableIfExists('maintenanceSchedules');
+  await knex.schema.dropTableIfExists('communicationLogs');
   await knex.schema.dropTableIfExists('appointments');
   await knex.schema.dropTableIfExists('quotes');
   await knex.schema.dropTableIfExists('inventoryParts');

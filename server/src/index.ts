@@ -1,4 +1,4 @@
-import express, { RequestHandler } from 'express';
+import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
 import knex from 'knex';
@@ -15,7 +15,7 @@ const dbConfig = isProduction ? knexConfig.production : knexConfig.development;
 export const db = knex(dbConfig);
 
 // Middleware
-app.use(cors() as RequestHandler);
+app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Increase limit for photo uploads
 
 // API Routes
