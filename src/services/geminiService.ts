@@ -1,11 +1,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import type { Quote, Language, VinInfo, ShopSettings, ModelListResponse } from '../types.js';
+import type { Quote, Language, VinInfo, ShopSettings, ModelListResponse } from '../types';
 
-if (!process.env.GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY environment variable is not set.");
+if (!process.env.API_KEY) {
+    throw new Error("API_KEY environment variable is not set.");
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const quoteSchema = {
     type: Type.OBJECT,
@@ -71,13 +71,6 @@ const modelListSchema = {
     required: ["models"],
 };
 
-const safeJsonParse = (jsonString: string) => {
-    const cleanJsonText = jsonString.trim().replace(/^```json\s*|```\s*$/g, '').trim();
-    if (!cleanJsonText) {
-        throw new Error("AI model returned an empty response after cleanup.");
-    }
-    return JSON.parse(cleanJsonText);
-}
 
 export const generateQuote = async (vehicleInfo: string, serviceRequest: string, customerName: string, language: Language, shopSettings: ShopSettings): Promise<Omit<Quote, 'id' | 'customerId' | 'vehicleId'>> => {
     const { taxRate, laborRate } = shopSettings;
@@ -97,6 +90,7 @@ export const generateQuote = async (vehicleInfo: string, serviceRequest: string,
         6. Add a helpful, brief note for the customer, addressing them by their name, ${customerName}. Write this note in the customer's preferred language (${language}).
     `;
     
+    let rawTextForErrorLogging: string | undefined;
     try {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
@@ -108,27 +102,50 @@ export const generateQuote = async (vehicleInfo: string, serviceRequest: string,
             },
         });
 
-        const text = response.text;
-        if (!text) {
+        const rawText = response.text;
+        rawTextForErrorLogging = rawText;
+
+        if (!rawText) {
+            console.error("AI model returned an empty response for quote generation.");
             throw new Error("AI model returned an empty response.");
         }
-        const quoteData = safeJsonParse(text);
+        
+        const cleanJsonText = rawText.trim().replace(/^```json\s*|```\s*$/g, '').trim();
+        
+        if (!cleanJsonText) {
+            console.error("AI model returned an empty response after cleanup for quote generation.");
+            throw new Error("AI model returned an empty response after cleanup.");
+        }
+        
+        const quoteData = JSON.parse(cleanJsonText);
         
         const recalculatedSubtotal = quoteData.services.reduce((sum: number, service: any) => sum + service.serviceTotal, 0);
         quoteData.subtotal = recalculatedSubtotal;
-        quoteData.taxAmount = recalculatedSubtotal * taxRate;
+        quoteData.taxAmount = recalculatedSubtotal * taxRate; // Recalculate tax to ensure it matches the setting
         quoteData.totalCost = quoteData.subtotal + quoteData.taxAmount;
 
         return quoteData;
+
     } catch (error) {
         console.error("Error generating or parsing quote:", error);
+        if (error instanceof SyntaxError) {
+             const errorText = rawTextForErrorLogging ?? '[response text was null or undefined]';
+             console.error(`Invalid JSON received for quote: ${errorText}`);
+        }
         throw new Error("Failed to get a valid quote from the AI model.");
     }
 };
 
 export const getVehicleInfoFromVin = async (vin: string): Promise<VinInfo> => {
-    const prompt = `Decode the following 17-character VIN and return ONLY a JSON object containing the vehicle's make, model, and year. Do not add any extra text, explanations, or markdown formatting. VIN: ${vin}`;
+    const prompt = `
+        You are a highly accurate vehicle VIN decoder. 
+        Decode the following 17-character VIN and return ONLY a JSON object containing the vehicle's make, model, and year.
+        Do not add any extra text, explanations, or markdown formatting.
 
+        VIN: ${vin}
+    `;
+
+    let rawTextForErrorLogging: string | undefined;
     try {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
@@ -139,44 +156,108 @@ export const getVehicleInfoFromVin = async (vin: string): Promise<VinInfo> => {
                 temperature: 0,
             },
         });
-        const text = response.text;
-        if (!text) {
+
+        const rawText = response.text;
+        rawTextForErrorLogging = rawText;
+        
+        if (!rawText) {
+            console.error("AI model returned an empty response for VIN lookup.");
             throw new Error("AI model returned an empty response for VIN lookup.");
         }
-        return safeJsonParse(text);
+        
+        const cleanJsonText = rawText.trim().replace(/^```json\s*|```\s*$/g, '').trim();
+
+        if (!cleanJsonText) {
+            console.error("AI model returned an empty response after cleanup for VIN lookup.");
+            throw new Error("AI model returned an empty response after cleanup for VIN lookup.");
+        }
+
+        return JSON.parse(cleanJsonText) as VinInfo;
+
     } catch (error) {
         console.error("Error decoding VIN:", error);
+        if (error instanceof SyntaxError) {
+             const errorText = rawTextForErrorLogging ?? '[response text was null or undefined]';
+             console.error(`Invalid JSON received for VIN: ${errorText}`);
+        }
         throw new Error("Failed to decode VIN from the AI model.");
     }
 };
 
 export const getVehicleInfoFromRegistration = async (registration: string): Promise<VinInfo> => {
-    const prompt = `You are a vehicle data API for the UK. Identify the Make, Model, and Year for a given vehicle registration number. Return ONLY a valid JSON object. If any piece of information cannot be determined, return the string "Unknown" for that specific field. Example: For "BP19 OVL", return {"make": "Ford", "model": "Fiesta", "year": "2019"}. Now, provide the details for this registration: "${registration}"`;
+    const prompt = `
+        You are an expert vehicle data API for the UK. Your task is to identify the Make, Model, and Year for a given vehicle registration number (number plate).
+        You must return the information in a valid JSON object format, and nothing else.
 
+        Follow these rules strictly:
+        1.  Analyze the registration number to determine the vehicle's details.
+        2.  Return ONLY the JSON object. Do not include any explanatory text, markdown formatting, or any characters outside of the JSON structure.
+        3.  If any piece of information (make, model, or year) cannot be determined, return the string "Unknown" for that specific field. Do not leave fields empty.
+
+        Here is an example:
+        Registration: "BP19 OVL"
+        Your response must be:
+        {
+          "make": "Ford",
+          "model": "Fiesta",
+          "year": "2019"
+        }
+
+        Now, provide the details for this registration:
+        Registration: "${registration}"
+    `;
+
+    let rawTextForErrorLogging: string | undefined;
     try {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
-                responseSchema: vinSchema,
+                responseSchema: vinSchema, // Reusing the same schema
                 temperature: 0,
             },
         });
-        const text = response.text;
-        if (!text) {
+
+        const rawText = response.text;
+        rawTextForErrorLogging = rawText;
+
+        if (!rawText) {
+            console.error("AI model returned an empty response for registration lookup.");
             throw new Error("AI model returned an empty response for registration lookup.");
         }
-        return safeJsonParse(text);
+
+        const cleanJsonText = rawText.trim().replace(/^```json\s*|```\s*$/g, '').trim();
+
+        if (!cleanJsonText) {
+            console.error("AI model returned an empty response after cleanup for registration lookup.");
+            throw new Error("AI model returned an empty response after cleanup for registration lookup.");
+        }
+
+        return JSON.parse(cleanJsonText) as VinInfo;
+
     } catch (error) {
         console.error("Error looking up registration:", error);
+        if (error instanceof SyntaxError) {
+             const errorText = rawTextForErrorLogging ?? '[response text was null or undefined]';
+             console.error(`Invalid JSON received for registration: ${errorText}`);
+        }
         throw new Error("Failed to look up registration from the AI model.");
     }
 };
 
 export const getModelsForMakeYear = async (make: string, year: string): Promise<ModelListResponse> => {
-    const prompt = `Provide a list of common vehicle models for the following make and year. Return ONLY a JSON object with a single key "models" which is an array of strings, sorted alphabetically. Make: ${make}, Year: ${year}`;
+    const prompt = `
+        You are a vehicle data API.
+        Provide a list of common vehicle models for the following make and year.
+        Return ONLY a JSON object with a single key "models" which is an array of strings. Do not add any extra text, explanations, or markdown formatting.
+        The list should be sorted alphabetically.
 
+        Make: ${make}
+        Year: ${year}
+    `;
+
+    let rawTextForErrorLogging: string | undefined;
     try {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
@@ -187,13 +268,27 @@ export const getModelsForMakeYear = async (make: string, year: string): Promise<
                 temperature: 0.1,
             },
         });
-        const text = response.text;
-        if (!text) {
+        
+        const rawText = response.text;
+        rawTextForErrorLogging = rawText;
+
+        if (!rawText) {
             throw new Error("AI model returned an empty response for model lookup.");
         }
-        return safeJsonParse(text);
+        
+        const cleanJsonText = rawText.trim().replace(/^```json\s*|```\s*$/g, '').trim();
+        if (!cleanJsonText) {
+            throw new Error("AI model returned an empty response after cleanup for model lookup.");
+        }
+        
+        return JSON.parse(cleanJsonText) as ModelListResponse;
+
     } catch (error) {
         console.error("Error fetching vehicle models:", error);
+        if (error instanceof SyntaxError) {
+             const errorText = rawTextForErrorLogging ?? '[response text was null or undefined]';
+             console.error(`Invalid JSON received for models: ${errorText}`);
+        }
         throw new Error("Failed to fetch vehicle models from the AI model.");
     }
 };

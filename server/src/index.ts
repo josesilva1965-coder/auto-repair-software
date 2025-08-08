@@ -4,7 +4,7 @@ import cors from 'cors';
 import 'dotenv/config';
 import knex from 'knex';
 
-import knexConfig from 'knexfile';
+import knexConfig from '../knexfile.js';
 import apiRouter from './api/index.js';
 
 const app = express();
@@ -20,7 +20,7 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Increase limit for photo uploads
 
 // API Routes
-app.use('/api', (req, res, next) => apiRouter(req, res, next));
+app.use('/api', apiRouter);
 
 // Start server
 app.listen(PORT, async () => {
