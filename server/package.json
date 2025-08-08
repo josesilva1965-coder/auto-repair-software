@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "npm run build && node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "db:migrate": "knex migrate:latest",
     "db:seed": "knex seed:run"

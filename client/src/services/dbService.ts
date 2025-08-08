@@ -1,4 +1,6 @@
-import type { Customer, Vehicle, Quote, Appointment, InventoryPart, Technician, ShopSettings, CommunicationLog, MaintenanceSchedule, VehicleMaintenance, Photo, DraftQuote, QuoteStatus, Payment } from '../types';
+/// <reference types="vite/client" />
+
+import type { Customer, Vehicle, Quote, Appointment, InventoryPart, Technician, ShopSettings, CommunicationLog, MaintenanceSchedule, VehicleMaintenance, Photo, DraftQuote, QuoteStatus, Payment } from '../types.js';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
