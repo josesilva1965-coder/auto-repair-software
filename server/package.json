@@ -1,0 +1,29 @@
+{
+  "name": "auto-repair-shop-server",
+  "version": "1.0.0",
+  "description": "Backend for the auto repair shop application",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "db:migrate": "knex migrate:latest",
+    "db:seed": "knex seed:run"
+  },
+  "dependencies": {
+    "@google/genai": "^1.12.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "knex": "^3.1.0",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.2",
+    "tsx": "^4.15.6",
+    "typescript": "^5.4.5"
+  }
+}

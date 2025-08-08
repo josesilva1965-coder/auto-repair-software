@@ -1,0 +1,5 @@
+{
+  "name": "Auto Repair Shop Quote Generator",
+  "description": "A comprehensive web application for managing an auto repair shop. This tool streamlines operations by generating detailed service quotes, enhancing customer relationships, and providing robust management capabilities.",
+  "requestFramePermissions": []
+}

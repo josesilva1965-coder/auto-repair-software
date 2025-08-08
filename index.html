@@ -1,0 +1,82 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Auto Repair Shop Quote Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // This script runs before the rest of the page loads
+      // to prevent a flash of the wrong theme.
+      if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+    </script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class', // Enable class-based dark mode
+        theme: {
+          extend: {
+            animation: {
+              'fade-in': 'fadeIn 0.5s ease-out forwards',
+              'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: 0 },
+                '100%': { opacity: 1 },
+              },
+              fadeInUp: {
+                '0%': { opacity: 0, transform: 'translateY(20px)' },
+                '100%': { opacity: 1, transform: 'translateY(0)' },
+              },
+            },
+            colors: {
+              'brand-lime': '#cce135',
+              'brand-lime-dark': '#b8c92e',
+              'brand-blue': '#1a73e8',
+              'brand-blue-dark': '#125abc',
+              'brand-gray': {
+                50: '#f8f9fa',
+                100: '#f1f3f5',
+                200: '#e9ecef',
+                300: '#dee2e6',
+                400: '#ced4da',
+                500: '#adb5bd',
+                600: '#6c757d',
+                700: '#495057',
+                800: '#343a40',
+                900: '#212529',
+              },
+            },
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.1.1/",
+    "react/": "https://esm.sh/react@^19.1.1/",
+    "react": "https://esm.sh/react@^19.1.1",
+    "@google/genai": "https://esm.sh/@google/genai@^1.12.0",
+    "vite": "https://esm.sh/vite@^7.0.6",
+    "path": "https://esm.sh/path@^0.12.7",
+    "url": "https://esm.sh/url@^0.11.4",
+    "cors": "https://esm.sh/cors@^2.8.5",
+    "dotenv/": "https://esm.sh/dotenv@^17.2.1/",
+    "express": "https://esm.sh/express@^5.1.0",
+    "knex": "https://esm.sh/knex@^3.1.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-brand-gray-100 dark:bg-brand-gray-900 transition-colors duration-300">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

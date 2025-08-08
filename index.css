@@ -1,0 +1,28 @@
+
+/* Add any base styles here */
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar for better aesthetics */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #ced4da; /* brand-gray-400 */
+    border-radius: 4px;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #495057; /* brand-gray-700 */
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #adb5bd; /* brand-gray-500 */
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+     background: #6c757d; /* brand-gray-600 */
+}
