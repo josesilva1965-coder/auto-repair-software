@@ -2,11 +2,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Quote, Language, VinInfo, ShopSettings, ModelListResponse } from '../types.js';
 
-if (!process.env.GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY environment variable is not set.");
+if (!process.env.API_KEY) {
+    throw new Error("API_KEY environment variable is not set.");
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const quoteSchema = {
     type: Type.OBJECT,
