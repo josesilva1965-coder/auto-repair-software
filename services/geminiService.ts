@@ -130,7 +130,7 @@ export const generateQuote = async (vehicleInfo: string, serviceRequest: string,
     } catch (error) {
         console.error("Error generating or parsing quote:", error);
         if (error instanceof SyntaxError) {
-             console.error("Invalid JSON received for quote:", rawTextForErrorLogging ?? '[response text was null or undefined]');
+             console.error("Invalid JSON received for quote:", rawTextForErrorLogging || '[response text was null or undefined]');
         }
         throw new Error("Failed to get a valid quote from the AI model.");
     }
@@ -178,7 +178,7 @@ export const getVehicleInfoFromVin = async (vin: string): Promise<VinInfo> => {
     } catch (error) {
         console.error("Error decoding VIN:", error);
         if (error instanceof SyntaxError) {
-             console.error("Invalid JSON received for VIN:", rawTextForErrorLogging ?? '[response text was null or undefined]');
+             console.error("Invalid JSON received for VIN:", rawTextForErrorLogging || '[response text was null or undefined]');
         }
         throw new Error("Failed to decode VIN from the AI model.");
     }
@@ -239,7 +239,7 @@ export const getVehicleInfoFromRegistration = async (registration: string): Prom
     } catch (error) {
         console.error("Error looking up registration:", error);
         if (error instanceof SyntaxError) {
-             console.error("Invalid JSON received for registration:", rawTextForErrorLogging ?? '[response text was null or undefined]');
+             console.error("Invalid JSON received for registration:", rawTextForErrorLogging || '[response text was null or undefined]');
         }
         throw new Error("Failed to look up registration from the AI model.");
     }
@@ -285,7 +285,7 @@ export const getModelsForMakeYear = async (make: string, year: string): Promise<
     } catch (error) {
         console.error("Error fetching vehicle models:", error);
         if (error instanceof SyntaxError) {
-             console.error("Invalid JSON received for models:", rawTextForErrorLogging ?? '[response text was null or undefined]');
+             console.error("Invalid JSON received for models:", rawTextForErrorLogging || '[response text was null or undefined]');
         }
         throw new Error("Failed to fetch vehicle models from the AI model.");
     }
