@@ -4,7 +4,7 @@
     "module": "ESNext",
     "lib": ["ES2022"],
     "moduleResolution": "bundler",
-    "rootDir": "src",
+    "rootDir": ".",
     "outDir": "dist",
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
@@ -14,6 +14,6 @@
     "skipLibCheck": true,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*"],
+  "include": ["src", "knexfile.js"],
   "exclude": ["node_modules"]
 }

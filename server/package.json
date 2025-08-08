@@ -2,11 +2,11 @@
   "name": "auto-repair-shop-server",
   "version": "1.0.0",
   "description": "Backend for the auto repair shop application",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "npm run build && node dist/index.js",
+    "start": "npm run build && node dist/src/index.js",
     "dev": "tsx watch src/index.ts",
     "db:migrate": "knex migrate:latest",
     "db:seed": "knex seed:run"

@@ -4,7 +4,7 @@ import cors from 'cors';
 import 'dotenv/config';
 import knex from 'knex';
 
-import knexConfig from '../knexfile.js';
+import knexConfig from 'knexfile';
 import apiRouter from './api/index.js';
 
 const app = express();
