@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Quote, Language, VinInfo, ShopSettings, ModelListResponse } from '../types.js';
 
@@ -76,8 +77,13 @@ const safeJsonParse = (jsonString: string) => {
     if (!cleanJsonText) {
         throw new Error("AI model returned an empty response after cleanup.");
     }
-    return JSON.parse(cleanJsonText);
-}
+    try {
+        return JSON.parse(cleanJsonText);
+    } catch(error) {
+        console.error("Failed to parse the following JSON string:", cleanJsonText);
+        throw error;
+    }
+};
 
 export const generateQuote = async (vehicleInfo: string, serviceRequest: string, customerName: string, language: Language, shopSettings: ShopSettings): Promise<Omit<Quote, 'id' | 'customerId' | 'vehicleId'>> => {
     const { taxRate, laborRate } = shopSettings;

@@ -1,5 +1,6 @@
+
 import { Router } from 'express';
-import { db } from '../index.js';
+import { db } from '../database.js';
 import { generateQuote } from '../services/geminiService.js';
 import { Quote, DraftQuote, Customer, Vehicle, ShopSettings } from '../types.js';
 

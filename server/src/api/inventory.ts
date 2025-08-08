@@ -1,5 +1,6 @@
+
 import { Router } from 'express';
-import { db } from '../index.js';
+import { db } from '../database.js';
 import { InventoryPart } from '../types.js';
 
 const router = Router();

@@ -2,18 +2,11 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
-import knex from 'knex';
-
-import knexConfig from '../knexfile.js';
+import { db, dbConfig } from './database.js';
 import apiRouter from './api/index.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const isProduction = process.env.NODE_ENV === 'production';
-
-// Initialize Database
-const dbConfig = isProduction ? knexConfig.production : knexConfig.development;
-export const db = knex(dbConfig);
 
 // Middleware
 app.use(cors());
@@ -29,11 +22,12 @@ app.listen(PORT, async () => {
     // Check if the database is empty and seed if necessary
     try {
         const customers = await db('customers').select('id').limit(1);
-        if (customers.length === 0) {
+        // Only seed if the DB is empty and a seed config exists (i.e., in development)
+        if (customers.length === 0 && dbConfig.seeds) {
             console.log('Database appears to be empty. Running seed...');
             await db.seed.run(dbConfig.seeds);
             console.log('Database seeded successfully.');
-        } else {
+        } else if (customers.length > 0) {
             console.log('Database already contains data.');
         }
     } catch (error) {
