@@ -116,11 +116,11 @@ export const down = async (knex) => {
   await knex.schema.dropTableIfExists('vehicleMaintenance');
   await knex.schema.dropTableIfExists('maintenanceSchedules');
   await knex.schema.dropTableIfExists('communicationLogs');
+  await knex.schema.dropTableIfExists('shopSettings');
   await knex.schema.dropTableIfExists('appointments');
   await knex.schema.dropTableIfExists('quotes');
   await knex.schema.dropTableIfExists('inventoryParts');
   await knex.schema.dropTableIfExists('technicians');
   await knex.schema.dropTableIfExists('vehicles');
   await knex.schema.dropTableIfExists('customers');
-  await knex.schema.dropTableIfExists('shopSettings');
 };

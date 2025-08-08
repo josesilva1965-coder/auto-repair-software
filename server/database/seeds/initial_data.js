@@ -3,7 +3,7 @@ import {
   mockCustomers, mockVehicles, mockInventoryParts, mockQuotes, 
   mockAppointments, mockTechnicians, mockShopSettings, mockCommunicationLogs, 
   mockMaintenanceSchedules, mockVehicleMaintenance 
-} from '../../../client/src/services/mockData.js';
+} from '../../src/services/mockData.js';
 
 /**
  * @param { import("knex").Knex } knex

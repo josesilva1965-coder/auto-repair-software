@@ -27,19 +27,25 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
     const customerData: Omit<Customer, 'id'> | Customer = req.body;
     
-    if ('id' in customerData) {
-        // Update existing customer
-        await db('customers').where({ id: customerData.id }).update({ ...customerData, tags: JSON.stringify(customerData.tags || []) });
-        res.json(customerData);
-    } else {
-        // Create new customer
-        const newCustomer: Customer = {
-            ...customerData,
-            id: `CUST-${Date.now()}`,
-            loyaltyPoints: 0,
-        };
-        await db('customers').insert({ ...newCustomer, tags: JSON.stringify(newCustomer.tags || []) });
-        res.status(201).json(newCustomer);
+    try {
+        if ('id' in customerData && customerData.id) {
+            // Update existing customer
+            await db('customers').where({ id: customerData.id }).update({ ...customerData, tags: JSON.stringify(customerData.tags || []) });
+            const updatedCustomer = await db('customers').where({ id: customerData.id }).first().then(parseCustomer);
+            res.json(updatedCustomer);
+        } else {
+            // Create new customer
+            const newCustomer: Customer = {
+                ...(customerData as Omit<Customer, 'id'>),
+                id: `CUST-${Date.now()}`,
+                loyaltyPoints: 0,
+            };
+            await db('customers').insert({ ...newCustomer, tags: JSON.stringify(newCustomer.tags || []) });
+            res.status(201).json(newCustomer);
+        }
+    } catch(error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error saving customer' });
     }
 });
 

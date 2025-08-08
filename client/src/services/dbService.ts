@@ -38,7 +38,7 @@ export const dbService = {
 
     // --- WRITE ---
     putCustomer: (customer: Omit<Customer, 'id'> | Customer): Promise<Customer> => apiRequest('/customers', { method: 'POST', body: JSON.stringify(customer) }),
-    putVehicle: (vehicle: Omit<Vehicle, 'id' | 'customerId'> | Vehicle, customerId: string): Promise<Vehicle> => apiRequest(`/customers/${customerId}/vehicles`, { method: 'POST', body: JSON.stringify(vehicle) }),
+    putVehicle: (vehicle: Omit<Vehicle, 'id' | 'customerId'> | Vehicle, customerId: string): Promise<Vehicle> => apiRequest(`/vehicles/customers/${customerId}/vehicles`, { method: 'POST', body: JSON.stringify(vehicle) }),
     putInventoryPart: (part: Omit<InventoryPart, 'id'> | InventoryPart): Promise<InventoryPart> => apiRequest('/inventory', { method: 'POST', body: JSON.stringify(part) }),
     putTechnician: (technician: Omit<Technician, 'id' | 'availability'>): Promise<Technician> => apiRequest('/technicians', { method: 'POST', body: JSON.stringify(technician) }),
     putMultipleTechnicians: (technicians: Technician[]): Promise<Technician[]> => apiRequest('/technicians/batch', { method: 'PUT', body: JSON.stringify({ technicians }) }),
@@ -61,11 +61,8 @@ export const dbService = {
     applyDiscount: (quoteId: string, pointsToRedeem: number): Promise<{ quote: Quote, customer: Customer }> => apiRequest(`/quotes/${quoteId}/discount`, { method: 'POST', body: JSON.stringify({ pointsToRedeem }) }),
     createCommunicationLog: (customerIds: string[], subject: string, message: string): Promise<CommunicationLog> => apiRequest('/logs', { method: 'POST', body: JSON.stringify({ customerIds, subject, message }) }),
 
-    // Data Backup/Restore (Client-side implementation remains for these)
     exportAllData: (): Promise<Record<string, any[]>> => apiRequest('/data/export'),
     clearAndImportData: (data: Record<string, any[]>): Promise<void> => {
-        // This is more complex and dangerous to expose via a simple API.
-        // For now, we'll keep the client-side file reading and send the whole blob to the server.
         return apiRequest('/data/import', { method: 'POST', body: JSON.stringify(data) });
     },
 };

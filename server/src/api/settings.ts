@@ -16,7 +16,6 @@ router.get('/', async (req, res) => {
     if (settings) {
         res.json(settings);
     } else {
-        // This case should ideally not happen if seeding is correct
         res.status(404).json({ message: 'Settings not found' });
     }
 });

@@ -1,3 +1,4 @@
+
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
@@ -19,7 +20,7 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Increase limit for photo uploads
 
 // API Routes
-app.use('/api', apiRouter);
+app.use('/api', (req, res, next) => apiRouter(req, res, next));
 
 // Start server
 app.listen(PORT, async () => {

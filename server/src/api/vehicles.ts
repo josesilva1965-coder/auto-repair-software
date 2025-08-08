@@ -28,20 +28,26 @@ router.post('/customers/:customerId/vehicles', async (req, res) => {
     const vehicleData: Omit<Vehicle, 'id' | 'customerId'> | Vehicle = req.body;
     const { customerId } = req.params;
 
-    if ('id' in vehicleData) {
-        // Update
-        await db('vehicles').where({ id: vehicleData.id }).update({ ...vehicleData, photos: JSON.stringify(vehicleData.photos || []) });
-        res.json(vehicleData);
-    } else {
-        // Create
-        const newVehicle: Vehicle = {
-            ...vehicleData,
-            id: `VEH-${Date.now()}`,
-            customerId: customerId,
-            photos: [],
-        };
-        await db('vehicles').insert({ ...newVehicle, photos: JSON.stringify(newVehicle.photos) });
-        res.status(201).json(newVehicle);
+    try {
+        if ('id' in vehicleData && vehicleData.id) {
+            // Update
+            await db('vehicles').where({ id: vehicleData.id }).update({ ...vehicleData, photos: JSON.stringify(vehicleData.photos || []) });
+            const updatedVehicle = await db('vehicles').where({ id: vehicleData.id }).first().then(parseVehicle);
+            res.json(updatedVehicle);
+        } else {
+            // Create
+            const newVehicle: Vehicle = {
+                ...(vehicleData as Omit<Vehicle, 'id' | 'customerId'>),
+                id: `VEH-${Date.now()}`,
+                customerId: customerId,
+                photos: [],
+            };
+            await db('vehicles').insert({ ...newVehicle, photos: JSON.stringify(newVehicle.photos) });
+            res.status(201).json(newVehicle);
+        }
+    } catch(error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error saving vehicle' });
     }
 });
 

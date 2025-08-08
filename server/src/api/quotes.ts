@@ -37,16 +37,21 @@ router.post('/generate', async (req, res) => {
     try {
         const customer = await db('customers').where({ id: customerId }).first() as Customer;
         const vehicle = await db('vehicles').where({ id: vehicleId }).first() as Vehicle;
-        const settings = await db('shopSettings').where({ id: 'default' }).first().then(s => ({ ...s, daysOpen: JSON.parse(s.daysOpen), operatingHours: JSON.parse(s.operatingHours) })) as ShopSettings;
+        const settingsRow = await db('shopSettings').where({ id: 'default' }).first();
+        if (!settingsRow) {
+             return res.status(404).json({ message: "Shop settings not configured" });
+        }
+        const settings = { ...settingsRow, daysOpen: JSON.parse(settingsRow.daysOpen), operatingHours: JSON.parse(settingsRow.operatingHours) } as ShopSettings;
 
-        if (!customer || !vehicle || !settings) {
-            return res.status(404).json({ message: "Customer, vehicle, or settings not found" });
+        if (!customer || !vehicle) {
+            return res.status(404).json({ message: "Customer or vehicle not found" });
         }
         
         const vehicleInfo = `${vehicle.year} ${vehicle.make} ${vehicle.model}`;
         const draftQuote = await generateQuote(vehicleInfo, serviceRequest, customer.name, 'en-GB', settings);
         res.json(draftQuote);
     } catch (error: any) {
+        console.error(error);
         res.status(500).json({ message: error.message });
     }
 });

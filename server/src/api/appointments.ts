@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
 // POST to create a new appointment
 router.post('/', async (req, res) => {
     const { quoteId, dateTime } = req.body;
-    const quote = await db('quotes').where({ id: quoteId }).first() as Quote;
+    const quote = await db('quotes').where({ id: quoteId }).first();
     if (!quote) return res.status(404).json({ message: 'Quote not found' });
 
     const newAppointment: Appointment = {
@@ -25,10 +25,10 @@ router.post('/', async (req, res) => {
     };
     await db('appointments').insert(newAppointment);
 
-    quote.appointmentId = newAppointment.id;
     await db('quotes').where({ id: quoteId }).update({ appointmentId: newAppointment.id });
+    const updatedQuote = await db('quotes').where({ id: quoteId }).first();
     
-    res.status(201).json({ appointment: newAppointment, quote });
+    res.status(201).json({ appointment: newAppointment, quote: updatedQuote });
 });
 
 // PUT to update an appointment's date

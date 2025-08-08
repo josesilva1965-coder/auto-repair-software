@@ -16,18 +16,24 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
     const partData: Omit<InventoryPart, 'id'> | InventoryPart = req.body;
 
-    if ('id' in partData) {
-        // Update
-        await db('inventoryParts').where({ id: partData.id }).update({ ...partData, compatibleBrands: JSON.stringify(partData.compatibleBrands || []) });
-        res.json(partData);
-    } else {
-        // Create
-        const newPart: InventoryPart = {
-            ...partData,
-            id: `PART-${Date.now()}`,
-        };
-        await db('inventoryParts').insert({ ...newPart, compatibleBrands: JSON.stringify(newPart.compatibleBrands || []) });
-        res.status(201).json(newPart);
+    try {
+        if ('id' in partData && partData.id) {
+            // Update
+            await db('inventoryParts').where({ id: partData.id }).update({ ...partData, compatibleBrands: JSON.stringify(partData.compatibleBrands || []) });
+            const updatedPart = await db('inventoryParts').where({ id: partData.id }).first().then(parsePart);
+            res.json(updatedPart);
+        } else {
+            // Create
+            const newPart: InventoryPart = {
+                ...(partData as Omit<InventoryPart, 'id'>),
+                id: `PART-${Date.now()}`,
+            };
+            await db('inventoryParts').insert({ ...newPart, compatibleBrands: JSON.stringify(newPart.compatibleBrands || []) });
+            res.status(201).json(newPart);
+        }
+    } catch(error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error saving inventory part' });
     }
 });
 
