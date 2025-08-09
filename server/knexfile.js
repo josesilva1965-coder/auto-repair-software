@@ -5,6 +5,10 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// On Render, the persistent disk is mounted at /data. Use this for production.
+const prodDbPath = process.env.RENDER_DISK_PATH || path.resolve(__dirname, 'database');
+
+
 export default {
   development: {
     client: 'sqlite3',
@@ -22,7 +26,7 @@ export default {
   production: {
     client: 'sqlite3',
     connection: {
-      filename: path.resolve(__dirname, 'database', 'prod.sqlite3')
+      filename: path.resolve(prodDbPath, 'prod.sqlite3')
     },
     useNullAsDefault: true,
     migrations: {

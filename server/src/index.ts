@@ -5,7 +5,7 @@ import 'dotenv/config';
 import { db, dbConfig } from './database.js';
 import apiRouter from './api/index.js';
 
-const app = express();
+const app: express.Application = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
