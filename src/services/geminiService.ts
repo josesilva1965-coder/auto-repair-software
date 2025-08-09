@@ -1,7 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { Quote, Language, VinInfo, ShopSettings, ModelListResponse } from '../types';
 
-if (!process.env.API_KEY) { AIzaSyCJL7v6QHdggxVggJSWPc66M3UHsl6jWL8
+if (!process.env.API_KEY) {
     throw new Error("API_KEY environment variable is not set.");
 }
 

@@ -59,7 +59,7 @@ const LoadingSpinner: React.FC<{ title: string; description: string }> = ({ titl
     </div>
 );
 
-const ErrorDisplay: React.FC<{ message: string; onRetry?: () => void }> = ({ message, onRetry }) => {
+const ErrorDisplay: React.FC<{ message: string; onRetry?: () => void, retryText?: string; }> = ({ message, onRetry, retryText }) => {
     const { t } = useLocalization();
     return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -67,7 +67,7 @@ const ErrorDisplay: React.FC<{ message: string; onRetry?: () => void }> = ({ mes
             <h3 className="text-lg font-bold text-red-600 dark:text-red-400">{t('errorTitle')}</h3>
             <p className="mt-2 text-sm text-brand-gray-600 dark:text-brand-gray-300">{message}</p>
             {onRetry && (
-                 <button onClick={onRetry} className="mt-4 px-4 py-2 bg-brand-blue text-white rounded-md">Try Again</button>
+                 <button onClick={onRetry} className="mt-4 px-4 py-2 bg-brand-blue text-white rounded-md">{retryText || t('tryAgainButton')}</button>
             )}
         </div>
     </div>
@@ -84,7 +84,8 @@ const AppContent: React.FC<{
     const [isLoading, setIsLoading] = useState(true);
     const [isDataLoaded, setIsDataLoaded] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [loadingError, setLoadingError] = useState<string | null>(null);
+    const [operationError, setOperationError] = useState<string | null>(null);
 
     // Data stores
     const [customers, setCustomers] = useState<Customer[]>([]);
@@ -129,7 +130,7 @@ const AppContent: React.FC<{
     // ===================================================================================
     const loadAllData = useCallback(async () => {
         setIsLoading(true);
-        setError(null);
+        setLoadingError(null);
         try {
             // All dbService calls now fetch from the backend API
             const [
@@ -157,7 +158,7 @@ const AppContent: React.FC<{
             setIsDataLoaded(true);
         } catch (err) {
             console.error(err);
-            setError(t('errorFailedToLoad'));
+            setLoadingError(t('errorFailedToLoad'));
         } finally {
             setIsLoading(false);
         }
@@ -274,15 +275,15 @@ const AppContent: React.FC<{
 
     const handleGenerateQuote = async (formData: { customerId: string, vehicleId: string }, serviceRequest: string) => {
         setIsGenerating(true);
-        setError(null);
+        setOperationError(null);
         try {
             const newQuoteData = await dbService.generateQuote(formData.customerId, formData.vehicleId, serviceRequest);
             
             setDraftQuote({ ...newQuoteData, customerId: formData.customerId, vehicleId: formData.vehicleId });
             setSelectedQuoteId(null); // Ensure we're viewing the draft
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setError(t('errorFailedToGenerate'));
+            setOperationError(err.message || t('errorFailedToGenerate'));
         } finally {
             setIsGenerating(false);
         }
@@ -297,7 +298,7 @@ const AppContent: React.FC<{
             setSelectedQuoteId(newQuote.id);
         } catch (err) {
             console.error(err);
-            setError(t('errorFailedToSaveQuote'));
+            setOperationError(t('errorFailedToSaveQuote'));
         }
     };
     
@@ -311,7 +312,7 @@ const AppContent: React.FC<{
             setModalState(prev => ({...prev, isCustomerModalOpen: false}));
         } catch (err) {
             console.error(err);
-            setError(t('errorFailedToSaveCustomer'));
+            setOperationError(t('errorFailedToSaveCustomer'));
         }
     };
 
@@ -328,7 +329,7 @@ const AppContent: React.FC<{
             setVehicleToEdit(null);
         } catch (err) {
             console.error(err);
-            setError(t('errorFailedToSaveVehicle'));
+            setOperationError(t('errorFailedToSaveVehicle'));
         }
     };
 
@@ -343,7 +344,7 @@ const AppContent: React.FC<{
             setPartToEdit(null);
         } catch (err) {
             console.error(err);
-            setError(t('errorFailedToSavePart'));
+            setOperationError(t('errorFailedToSavePart'));
         }
     };
 
@@ -354,7 +355,7 @@ const AppContent: React.FC<{
             setModalState(prev => ({...prev, isTechnicianModalOpen: false}));
         } catch (err) {
             console.error(err);
-            setError(t('errorFailedToSaveTechnician'));
+            setOperationError(t('errorFailedToSaveTechnician'));
         }
     };
 
@@ -364,7 +365,7 @@ const AppContent: React.FC<{
             setTechnicians(updatedTechnicians);
         } catch(err) {
             console.error(err);
-            setError(t('errorFailedToSaveTechnician'));
+            setOperationError(t('errorFailedToSaveTechnician'));
         }
     };
 
@@ -374,7 +375,7 @@ const AppContent: React.FC<{
             setQuotes(prev => prev.map(q => q.id === savedQuote.id ? savedQuote : q));
         } catch (err) {
             console.error(err);
-            setError(t('errorFailedToUpdateQuote'));
+            setOperationError(t('errorFailedToUpdateQuote'));
         }
     };
 
@@ -393,7 +394,7 @@ const AppContent: React.FC<{
             }
         } catch(err) {
             console.error(err);
-            setError(t('errorFailedToUpdateQuote'));
+            setOperationError(t('errorFailedToUpdateQuote'));
         }
     };
     
@@ -406,7 +407,7 @@ const AppContent: React.FC<{
                 setSelectedQuoteId(null);
             } catch (err) {
                 console.error(err);
-                setError(t('errorFailedToDeleteQuote'));
+                setOperationError(t('errorFailedToDeleteQuote'));
             }
         }
     };
@@ -417,7 +418,7 @@ const AppContent: React.FC<{
             setQuotes(prev => prev.map(q => q.id === quoteId ? updatedQuote : q));
         } catch (err) {
             console.error(err);
-            setError(t('errorFailedToUpdateQuote'));
+            setOperationError(t('errorFailedToUpdateQuote'));
         }
     };
     
@@ -429,7 +430,7 @@ const AppContent: React.FC<{
             setQuoteToSchedule(null);
         } catch(err) {
             console.error(err);
-            setError(t('errorFailedToSaveAppointment'));
+            setOperationError(t('errorFailedToSaveAppointment'));
         }
     };
 
@@ -439,7 +440,7 @@ const AppContent: React.FC<{
             setAppointments(prev => prev.map(a => a.id === appointmentId ? updatedAppointment : a));
         } catch(err) {
             console.error(err);
-            setError(t('errorFailedToUpdateAppointment'));
+            setOperationError(t('errorFailedToUpdateAppointment'));
         }
     };
     
@@ -457,7 +458,7 @@ const AppContent: React.FC<{
             setQuoteToPay(null);
         } catch(err) {
              console.error(err);
-             setError(t('errorFailedToSavePayment'));
+             setOperationError(t('errorFailedToSavePayment'));
         }
     };
 
@@ -469,7 +470,7 @@ const AppContent: React.FC<{
             await loadAllData();
         } catch(err) {
             console.error(err);
-            setError(t('errorFailedToAssignTechnician'));
+            setOperationError(t('errorFailedToAssignTechnician'));
         }
     };
     
@@ -495,7 +496,7 @@ const AppContent: React.FC<{
             setVehicles(prev => prev.map(v => v.id === vehicleId ? updatedVehicle : v));
         } catch (err) {
             console.error(err);
-            setError(t('errorFailedToSaveVehicle'));
+            setOperationError(t('errorFailedToSaveVehicle'));
         }
     };
 
@@ -507,7 +508,7 @@ const AppContent: React.FC<{
             setPhotoToShow(null);
         } catch (err) {
             console.error(err);
-             setError(t('errorFailedToDeletePhoto'));
+             setOperationError(t('errorFailedToDeletePhoto'));
         }
     };
     
@@ -516,9 +517,9 @@ const AppContent: React.FC<{
             const { quote: updatedQuote, customer: updatedCustomer } = await dbService.applyDiscount(quoteId, pointsToRedeem);
             setQuotes(prev => prev.map(q => q.id === quoteId ? updatedQuote : q));
             setCustomers(prev => prev.map(c => c.id === updatedCustomer.id ? updatedCustomer : c));
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setError(t('errorFailedToApplyDiscount'));
+            setOperationError(err.message || t('errorFailedToApplyDiscount'));
         }
     };
 
@@ -528,7 +529,7 @@ const AppContent: React.FC<{
             .map(c => c.email);
     
         if (recipients.length === 0 || recipients.some(r => !r)) {
-            setError(t('errorNoRecipientEmail'));
+            setOperationError(t('errorNoRecipientEmail'));
             return;
         }
     
@@ -540,7 +541,7 @@ const AppContent: React.FC<{
             setCommunicationLogs(prev => [newLog, ...prev]);
         } catch (err) {
              console.error(err);
-             setError(t('errorFailedToSaveLog'));
+             setOperationError(t('errorFailedToSaveLog'));
         }
     };
 
@@ -551,7 +552,7 @@ const AppContent: React.FC<{
             setModalState(p => ({ ...p, isMaintScheduleModalOpen: false }));
         } catch (err) {
             console.error(err);
-            setError(t('errorFailedToSaveMaintSchedule'));
+            setOperationError(t('errorFailedToSaveMaintSchedule'));
         }
     };
 
@@ -561,7 +562,7 @@ const AppContent: React.FC<{
             setShopSettings(savedSettings);
         } catch(err) {
              console.error(err);
-             setError(t('errorFailedToSaveSettings'));
+             setOperationError(t('errorFailedToSaveSettings'));
              throw err; // Re-throw for the component to handle UI state
         }
     };
@@ -912,7 +913,9 @@ const AppContent: React.FC<{
             <PhotoViewerModal isOpen={!!photoToShow} onClose={() => setPhotoToShow(null)} photoData={photoToShow} onDelete={handleDeleteVehiclePhoto} />
             <MaintenanceScheduleModal isOpen={modalState.isMaintScheduleModalOpen} onClose={() => setModalState(p => ({...p, isMaintScheduleModalOpen: false}))} onSave={handleSaveMaintSchedule} />
             {shopSettings && <CommunicationModal isOpen={!!communicationModalData} onClose={() => setCommunicationModalData(null)} data={communicationModalData} shopSettings={shopSettings} onSend={handleSendMessage} />}
-            {error && <ErrorDisplay message={error} onRetry={loadAllData} />}
+            
+            {loadingError && <ErrorDisplay message={loadingError} onRetry={loadAllData} retryText={t('tryAgainButton')} />}
+            {operationError && <ErrorDisplay message={operationError} onRetry={() => setOperationError(null)} retryText={t('okButton')} />}
         </div>
     );
 };
