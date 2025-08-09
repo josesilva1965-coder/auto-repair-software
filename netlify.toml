@@ -1,0 +1,6 @@
+# ... other lines
+[[redirects]]
+  from = "/api/*"
+  to = "https://celadon-halva-80d498.netlify.app/"
+  status = 200
+# ... other lines
